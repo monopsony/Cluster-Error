@@ -56,7 +56,7 @@ def cluster(R,E,dir):
     #using smallest max distance as criterion
     #+ni to find the old index back from entire dataset
     print("Clustering rest of data...")
-    outs=np.trunc(np.linspace(0,len(R_rest),19))
+    outs=np.trunc(np.linspace(0,len(R_rest),99))
     for i in range(len(R_rest)):
         
         #%done output
@@ -65,14 +65,15 @@ def cluster(R,E,dir):
                 ch=0
             else:
                 ch=float(i)/len(R_rest)*100
-            print("{:.0f}% done".format(ch))
+            sys.stdout.write("\r[{:.0f}%] done".format(ch+1))
+            sys.stdout.flush()
             outs=np.delete(outs,0)
     
         rc=np.array(R_rest[i])
         c=find_smallest_max_distance_index(rc,clusterR) #c is the cluster# it belongs to
         cluster_ind[c].append(ind_rest[i])
-        
-    print("Rest of data clustered")
+    
+    print("")
     
     
     #now perform energy clusters
@@ -80,7 +81,8 @@ def cluster(R,E,dir):
     print("Reclustering by energy...")
     clusterLabels2=[]
     for i in range(n1):
-        print( "{} out of {}".format(i,n1) )
+        sys.stdout.write( "\r[{}/{}] done".format(i+1,n1) )
+        sys.stdout.flush()
         c=E[cluster_ind[i]]
         labels=MiniBatchKMeans(n_clusters=n2,init="k-means++").fit_predict(c)
         clusterLabels2.append(labels)
@@ -95,10 +97,9 @@ def cluster(R,E,dir):
         for j in range(n2):
             ind=np.argwhere(labels==j)
             cluster_ind2[i*n2+j]=indices[ind]
-            
-    if os.path.exists(dir+"cluster_indices_all.npy"):
-        os.remove(dir+"cluster_indices_all.npy")
-    np.save(dir+"cluster_indices_all.npy",cluster_ind2)
-
+           
+    
+    print("")
+    
     return cluster_ind2
     

@@ -5,6 +5,7 @@ import shutil as shutil
 from sgdml.predict import GDMLPredict
 from sgdml.utils import io
 from sklearn.metrics import mean_squared_error
+from sgdml.predict import GDMLPredict
 import cluster
 from desc import r_to_desc
 
@@ -112,7 +113,11 @@ def load_dataset(dataset_path):
             return False
             
     return data
+   
+def calculate_errors(model,dataset,cluster_indices):
     
+    
+   
 if __name__=="__main__":
     model_path,dataset_path=parse_arguments(sys.argv[1:])
     
@@ -138,6 +143,39 @@ if __name__=="__main__":
     
     #cluster the data, return indices of each cluster
     cluster_indices=cluster.cluster(R,E,storage_dir)
+    
+    '''
+    if os.path.exists(dir+"cluster_indices_all.npy"):
+        os.remove(dir+"cluster_indices_all.npy")
+    np.save(dir+"cluster_indices_all.npy",cluster_ind2)
+    '''
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     
     
