@@ -23,7 +23,7 @@ def cluster(R,E,dir):
     R,E=np.array(R),np.array(E)
     
     if R.shape[0]<para.initial_spatial_data_points:
-        print("Not enough points in dataset")
+        print("Not enough points in dataset. Lower the initial_spatial_data_points parameter in the para.py file or add more points to the database.")
         return
         #TBA error handling
         
@@ -75,7 +75,6 @@ def cluster(R,E,dir):
     
     print("")
     
-    
     #now perform energy clusters
     #for every single spacial cluster
     print("Reclustering by energy...")
@@ -95,7 +94,7 @@ def cluster(R,E,dir):
         indices=np.array(cluster_ind[i])
         
         for j in range(n2):
-            ind=np.argwhere(labels==j)
+            ind=np.concatenate(np.argwhere(labels==j).tolist())
             cluster_ind2[i*n2+j]=indices[ind]
            
     

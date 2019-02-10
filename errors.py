@@ -7,7 +7,7 @@ from sgdml.utils import io
 from sklearn.metrics import mean_squared_error
 from sgdml.predict import GDMLPredict
 import cluster
-from desc import r_to_desc
+from descri import r_to_desc
 
 path = os.path.dirname(os.path.realpath(__file__))
 
@@ -115,9 +115,50 @@ def load_dataset(dataset_path):
     return data
    
 def calculate_errors(model,dataset,cluster_indices):
+    print("Calculating errors for each cluster...")
+    try:
+        gdml=GDMLPredict(model)
+    except:
+        print("Were not able to read GDML model file.")
+        sys.exit(2)
+    
+    #helping variables
+    n_clusters=len(cluster_indices)
+    R,F=dataset["R"],dataset["F"]
+    mse=[]
+    
+    #loop through clusters
+    #predict results for each cluster
+    #calculate error, save in list
+    sys.stdout.write( "\r[0/{}] done".format(n_clusters) )
+    sys.stdout.flush()
+    for i in range(n_clusters):
+        cind=cluster_indices[i] #cluster indices
+        cr,cf=R[cind],F[cind] #cluster R 
+        n_samples,n_atoms,n_dim=cr.shape
+        
+        #reshaping, necessary for GDML to process it
+        cr=np.reshape(cr,(n_samples,n_atoms*n_dim))  
+        cf=np.reshape(cf,(n_samples,n_atoms*n_dim))  
+        
+        #predict forces for all given cluster geometries
+        _,cf_pred=gdml.predict(cr)
+        err=(cf-cf_pred)**2
+        mse.append(err.mean())
+
+        #print out
+        sys.stdout.write( "\r[{}/{}] done".format(i+1,n_clusters) )
+        sys.stdout.flush()
+     
+    print("")   
+    #order the cluster_indices etc
+    sorted_ind=np.argsort(mse)
+    mse=np.array(mse)
+    cluster_indices=np.array(cluster_indices)
+    
+    return mse[sorted_ind],cluster_indices[sorted_ind]
     
     
-   
 if __name__=="__main__":
     model_path,dataset_path=parse_arguments(sys.argv[1:])
     
@@ -144,13 +185,13 @@ if __name__=="__main__":
     #cluster the data, return indices of each cluster
     cluster_indices=cluster.cluster(R,E,storage_dir)
     
-    '''
-    if os.path.exists(dir+"cluster_indices_all.npy"):
-        os.remove(dir+"cluster_indices_all.npy")
-    np.save(dir+"cluster_indices_all.npy",cluster_ind2)
-    '''
-    
-    
+    mse,cluster_indices=calculate_errors(model,dataset,cluster_indices)
+
+    #save cluster indices
+    if os.path.exists(storage_dir+"cluster_indices_all.npy"):
+        os.remove(storage_dir+"cluster_indices_all.npy")
+    np.save(storage_dir+"cluster_indices_all.npy",cluster_indices)
+
     
     
     
