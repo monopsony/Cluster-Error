@@ -5,8 +5,6 @@ from sklearn.metrics.pairwise import euclidean_distances
 import os as os
 import sys as sys
 
-import para
-
 path = os.path.dirname(os.path.realpath(__file__))
 
 
@@ -18,11 +16,13 @@ def find_smallest_max_distance_index(sample,clusters):
     return np.argmin(g)
     
 def cluster(R,E,dir):
+    import para
+
     print("Starting clusterisation")
     #making sure they're numpy arrays
     R,E=np.array(R),np.array(E)
     
-    if R.shape[0]<para.initial_spatial_data_points:
+    if R.shape[0]<initial_spatial_data_points:
         print("Not enough points in dataset. Lower the initial_spatial_data_points parameter in the para.py file or add more points to the database.")
         return
         #TBA error handling
