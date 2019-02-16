@@ -41,14 +41,18 @@ def cluster(R,E,dir):
 
 
     #perform agglomerative clustering
-    #cluster labels for each sample will be contained in clusterLabels
     M=np.square(euclidean_distances(R_init,R_init))
     print("Starting Agglomerative clustering...")
     clusterLabels=AgglomerativeClustering(affinity="precomputed",n_clusters=n1,linkage='complete').fit_predict(M)
     print("Agglomerative clustering done")
     
     for i in range(n1):
-        cluster_ind.append( np.concatenate(np.argwhere(clusterLabels==i)).tolist() )
+        ind=np.concatenate(np.argwhere(clusterLabels==i))
+
+        #convert back to initial set of indices (since these are indices from a subset of the entire dataset)
+        ind=ind_init[ind]
+
+        cluster_ind.append(ind.tolist())
         clusterE.append(np.array(E[cluster_ind[i]]))
         clusterR.append(np.array(R[cluster_ind[i]]))
     
