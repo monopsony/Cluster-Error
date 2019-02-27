@@ -8,24 +8,64 @@ import sys as sys
 path = os.path.dirname(os.path.realpath(__file__))
 
 
-#returns the cluster number that the sample belongs to (shortest distance to center)
 def find_smallest_max_distance_index(sample,clusters):
-    g=np.zeros( len(clusters))
+    '''
+    Finds the cluster that the given sample belongs to. Simple euclidean distance is used.
+    (The metric used should be the same as for the agglomerative clustering.)
+    
+    Paramters:
+        -sample: 
+            numpy array containing positions of atoms of one samples
+            Dimensions: (n_atoms,n_dimensions)
+        
+        -clusters: 
+            numpy array containing positions within each cluster
+            Dimensions: (n_clusters,n_atoms,n_dimensions)
+                    
+    Returns:
+        -index of cluster that the sample belongs to / closest cluster
+                                         
+    '''
+    
+    g=np.zeros(len(clusters))
     for i in range(len(clusters)):
         g[i]=np.max(np.sum(np.square(clusters[i]-sample),1))   #numpy difference=>clusters[c]-sample elementwise for each c
     return np.argmin(g)
     
-def cluster(R,E,dir):
-    import para
+def cluster(R,E):
 
+    '''
+    Does the entire clusterisation starting with the database containing
+    positions R and energies E of each sample. Returns array of cluster indices.
+    
+    Some parameters for the clusterisation can be found and edited in the para.py file.
+    
+    Parameters:
+        -R: 
+            numpy array containing positions for every sample in the database.
+            Dimensions: (n_samples,n_atoms,n_dimensions)
+            
+        -F: 
+            numpy array containing forces for every sample in the database.
+            Dimensions: (n_samples,n_atoms,n_dimensions)        
+            
+    Returns:
+        -cluster_ind2:
+            numpy array containing array of indices for each cluster. 
+            e.g. if cluster_ind2[2] contains the index 10, this means that the 11th 
+            sample in the original database belongs to the third cluster.
+            Dimensions: (n_clusters,*)
+    
+    '''
+
+    import para
     print("Starting clusterisation")
     #making sure they're numpy arrays
     R,E=np.array(R),np.array(E)
     
-    if R.shape[0]<initial_spatial_data_points:
+    if R.shape[0]<para.initial_spatial_data_points:
         print("Not enough points in dataset. Lower the initial_spatial_data_points parameter in the para.py file or add more points to the database.")
         return
-        #TBA error handling
         
     #helping variables    
     print("Preparing and transforming dataset...")

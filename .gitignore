@@ -2,3 +2,4 @@ storage/
 datasets/
 models/
 *.pyc
+private/
