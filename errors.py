@@ -233,8 +233,8 @@ def read_concat_ext_xyz(f):
 def save_clusters_xyz(storage_dir,dataset,cluster_indices,mse):
     '''
     Saves all clusters individually as xyz files into the storage directory.
-    Names are simply "cluster{cluster number}.xyz". Cluster number goes in descending order 
-    of mean squared error;  Cluster1.xyz has the highest error.
+    Names are simply "cluster{cluster number}.xyz". Cluster number goes in ascending order 
+    of mean squared error;  Cluster50.xyz has the largest error.
     
     Parameters:
         -storage_dir:
@@ -401,7 +401,7 @@ def calculate_errors(dataset,cluster_indices):
 
     return mse[sorted_ind],cluster_indices[sorted_ind],sample_errors[sorted_ind]
     
-def error_graph(mse,dir):
+def error_graph(mse,dir,cluster_indices,E):
 
     '''
     Generates and saves the graph of the mean squared error for each cluster. File name is "graph.png" 
@@ -416,9 +416,41 @@ def error_graph(mse,dir):
         -dir:
             string corresponding to path to storage directory
     '''
+    
+    #by default the cluster_indices and mse are ordered by error due to calculate_errors
+    if para.order_by_energy:
+        cE=[]
+        for i in range(len(cluster_indices)):
+            cE.append( np.average(E[cluster_indices]) )
+        cE=np.array(cE)
+        
+        order=np.argsort(cE)
+        cluster_indices=cluster_indices[order]
+        mse=mse[order]
+        
+    if para.include_population:
+        pop,tot=[],0
+        
+        #calculate total population
+        for c in cluster_indices:
+            tot=tot+len(c)
+        
+        if para.total_population:
+            for c in cluster_indices:
+                if not pop[-1]:
+                    pop.append(len(c))
+                else:
+                    pop.append(pop[-1]+len(c))
+        else:
+            for c in cluster_indices:
+                pop.append(len(c))
+        
+        pop=np.array(pop)
 
     #x axis
     x=np.arange(len(mse))+1
+    if para.reverse_order:
+        x=np.flip(a)
     
     #helping variables
     min,max,avg=np.min(mse),np.max(mse),np.average(mse)
@@ -435,6 +467,9 @@ def error_graph(mse,dir):
     #create figure
     f,ax1=plt.subplots()
     ax1.bar(x,mse)
+    if para.include_population:
+        pop=pop*
+
     ax1.set_xticks(xticks)
     ax1.set_xticklabels(xlabels,fontsize=fs)
     ax1.set_yticks(yticks)
@@ -477,6 +512,26 @@ def save_mse_file(storage_dir,mse):
         f.write( ("{}\t{}\n").format(i+1,mse[i]))
     f.close()
 
+
+def save_dataset_energies(storage_dir,E):
+    '''
+    Saves the energies of the original dataset as a numpy array. This is only required
+    to enable graph mode usage when the order_by_energy parameter is set to true.
+    
+    Parameters:
+        -storage_dir:
+            string corresponding to the path to the storage directory
+            
+        -E:
+            numpy array of energies of the original dataset
+    
+    '''
+    
+    if os.path.exists(storage_dir+"dataset_energies.npy"):
+        os.remove(storage_dir+"dataset_energies.npy")
+    np.save(storage_dir+"dataset_energies.npy",E)
+
+
 if __name__=="__main__":
     
     #load arguments 
@@ -494,6 +549,8 @@ if __name__=="__main__":
         except Exception as e:
             print("Could not load mse text file at "+mse_path+". Please ensure the path is correct and the file is of the correct type.")
             sys.exit(2)
+        
+        cluster_indices=np.load(storage_directory+"cluster_indices_all.npy")
         
         error_graph(mse[:,1],storage_directory)
         sys.exit()
@@ -530,12 +587,17 @@ if __name__=="__main__":
     #save cluster mean squared error as text   
     save_mse_file(storage_dir,mse)
     
-    #make and store the graph unless argument [-e] was present
-    if not no_graph:
-        error_graph(mse,storage_dir)
-    
     #save clusters into the storage directory
     save_clusters_xyz(storage_dir,dataset,cluster_indices,samples_mse)
+
+    #save database energy for further graph_mode usage
+    save_dataset_energies(storage_dir,E)
+
+    #make and store the graph unless argument [-e] was present
+    if not no_graph:
+        error_graph(mse,storage_dir,cluster_indices,E)
+    
+
 
     
     

@@ -10,7 +10,6 @@ def load_model(model_path):
     Parameters:
       -model_path: 
           string of the path to the model file
-        
     '''
 
     try:
