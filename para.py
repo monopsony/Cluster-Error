@@ -2,7 +2,7 @@
 #cluster parameters
 number_of_spacial_clusters=10
 number_of_energy_clusters=5
-initial_spatial_data_points=5000
+initial_spatial_data_points=10000
 
 #graph parameters
 x_axis_label="Cluster number1"
