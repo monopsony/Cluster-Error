@@ -10,16 +10,16 @@ path = os.path.dirname(os.path.realpath(__file__))+"/"
 def print_usage():
     print('''
     Calculate errors based on model and database file:
-    python error.py -m <model_file> -d <database_file> [-e]
+    python error.py -m <model_file> -d <database_file> [-e] [-c <clusters_file>]
 
     Generate graph based on mean-squared error text file:
     python error.py -g <mse_input_file>
 
     Optional arguments:
-    -h    shows this help message
+    -h    shows this help message 
     -e    excludes graph from the outputs
-    -r    resets parameter file to default (ignores all other arguments)
-    
+    -r    resets parameter file to default (then exits)
+    -c    allows the user to input a .npy file of cluster indices manually
     ''')
 
 def reset_para_file():
@@ -30,15 +30,19 @@ number_of_energy_clusters=5
 initial_spatial_data_points=2500
 
 #graph parameters
-x_axis_label="Cluster number"
+x_axis_label="Cluster number1"
 y_axis_label="Mean squared average"
 fontsize1=30 #used for axis labels
 fontsize2=30*0.6 #used for tick labels
 linewidth1=5 #used for axes
-horizontal_line=True #whether to include a  horizontal line to show the average
-linewidth2=3 #used for horizontal "average" line
+horizontal_line=True #if True, includes a horizontal line to show the average error 
+linewidth2=3 #used for horizontal "average error" line
 horizontal_line_color="green" 
 size_in_inches=(18.5,11) #graph size
+include_population=True  #indicates the cluster population for every cluster 
+total_population=False  #if include_population is True, the population will instead be shown as a total population curve
+order_by_energy=False     #if true, the graph will order the clusters by their average energy rather than error
+reverse_order=False  #if False, orders from lowest error/energy to highest (left to right), reversed otherwise
     '''
         
     if os.path.exists(path+"para.py"):
@@ -70,14 +74,18 @@ def parse_arguments(argv):
             
         -r:
             resets the para.py file to the default values then exits.
+
         -g:
             enters graph_only mode. Saves corresponding var to mse_path.
+
+        -c:
+            gives the option to input your own .npy file of cluster indices. Saves corresponding var to cluster_path.
             
     Returns:
-        model_path,dataset_path,graph_only,mse_path,no_graph
+        model_path,dataset_path,graph_only,mse_path,no_graph,cluster_path
         
-        -model_path,dataset_path:
-            string corresponding to path to model file and dataset file respectively
+        -model_path,dataset_path,cluster_path:
+            string corresponding to path to model, dataset and cluster file respectively
         
         -graph_only:
             boolean indicating whether to enter graph-only mode. Needs mean_squared_error.txt file
@@ -92,13 +100,13 @@ def parse_arguments(argv):
     
     model_path,dataset_path=None,None
     try:
-        opts,args=getopt.getopt(argv,"hrm:d:g:")
+        opts,args=getopt.getopt(argv,"hrm:d:g:c:")
     except getopt.GetoptError as err:
         print(str(err))
         sys.exit(2)
     
     #defaults
-    no_graph=False
+    no_graph,cluster_path=False,False
     
     for opt,arg in opts:
         if opt=='-h':
@@ -110,14 +118,23 @@ def parse_arguments(argv):
             
         elif opt=="-d":
             dataset_path=arg
-        
+    
+        elif opt=="-c":
+            cluster_path=arg or nil
+            if not cluster_path:
+                print("No cluster path given after -c option. Use the -h argument for help.")
+                sys.exit(2)
+            elif not os.path.exists(cluster_path):
+                print("No cluster indices file found under path "+cluster_path)
+                sys.exit(2)
+
         elif opt=="-g":
             print("Graph only mode:")
             mse_path=arg
             if not mse_path:
                 print("Path to mean-squared error textfile required.")
             else:
-                return None,None,True,mse_path,False
+                return None,None,True,mse_path,False,False
         
         elif opt=="-e":
             no_graph=True
@@ -141,10 +158,9 @@ def parse_arguments(argv):
         print("No dataset file found under path "+dataset_path)
         sys.exit(2)
     
-    return model_path,dataset_path,False,None,no_graph
+    return model_path,dataset_path,False,None,no_graph,cluster_path
 
-
-def create_storage_directory(model_path,dataset_path):
+def create_storage_directory(model_path,dataset_path,cluster_path):
     '''
     Creates the directory in which to store the results.
     Directory will be {name_of_model_file}_{name_of_dataset_file} excluding extensions
@@ -153,8 +169,8 @@ def create_storage_directory(model_path,dataset_path):
     If a directory of the same name already exists, it will be overwritten.
     
     Parameters:
-        -model_path,dataet_path:
-            string corresponding to the path of the model file/dataset file respectively
+        -model_path,dataset_path,cluster_path:
+            string corresponding to the path of the model, dataset and cluster file respectively
             
     Returns:
         -storage_dir:
@@ -164,9 +180,13 @@ def create_storage_directory(model_path,dataset_path):
     dir_name="Default/"
     model_name=os.path.splitext(os.path.basename(model_path))[0]
     dataset_name=os.path.splitext(os.path.basename(dataset_path))[0]
+    if cluster_path:
+        cluster_name="_c_"+os.path.splitext(os.path.basename(cluster_path))[0]
+    else:
+        cluster_name=''
     dir_name=model_name+"_"+dataset_name
     
-    storage_dir=path+"/storage/"+dir_name+"/"
+    storage_dir=path+"/storage/"+dir_name+cluster_name+"/"
     if os.path.exists(storage_dir):
         shutil.rmtree(storage_dir)
     
@@ -174,7 +194,7 @@ def create_storage_directory(model_path,dataset_path):
     
     return storage_dir
 
-# Assumes that the atoms in each molecule are in the same order.
+#Assumes that the atoms in each molecule are in the same order.
 def read_concat_ext_xyz(f):
     '''
     Reads the content of an xyz file and saves it into arrays.
@@ -421,7 +441,7 @@ def error_graph(mse,dir,cluster_indices,E):
     if para.order_by_energy:
         cE=[]
         for i in range(len(cluster_indices)):
-            cE.append( np.average(E[cluster_indices]) )
+            cE.append( np.average(E[cluster_indices[i]]) )
         cE=np.array(cE)
         
         order=np.argsort(cE)
@@ -437,20 +457,21 @@ def error_graph(mse,dir,cluster_indices,E):
         
         if para.total_population:
             for c in cluster_indices:
-                if not pop[-1]:
+                if len(pop)==0:
                     pop.append(len(c))
                 else:
                     pop.append(pop[-1]+len(c))
         else:
             for c in cluster_indices:
                 pop.append(len(c))
-        
-        pop=np.array(pop)
+            
+
+        pop=np.array(pop).astype(float)/np.max(pop)
 
     #x axis
     x=np.arange(len(mse))+1
     if para.reverse_order:
-        x=np.flip(a)
+        x=np.flip(x)
     
     #helping variables
     min,max,avg=np.min(mse),np.max(mse),np.average(mse)
@@ -468,8 +489,11 @@ def error_graph(mse,dir,cluster_indices,E):
     f,ax1=plt.subplots()
     ax1.bar(x,mse)
     if para.include_population:
-        pop=pop*
-
+        if para.total_population:
+            pop=pop*max  #rescale to make sense in the graph (was normalised to 0-1 at creation 
+        else:
+            pop=pop*avg  #id
+        ax1.step(x,pop,c="orange",where="mid")
     ax1.set_xticks(xticks)
     ax1.set_xticklabels(xlabels,fontsize=fs)
     ax1.set_yticks(yticks)
@@ -487,8 +511,7 @@ def error_graph(mse,dir,cluster_indices,E):
     f.set_size_inches(para.size_in_inches)
     f.savefig(dir+"graph.png")
     print("Graph saved at {}".format(dir+"graph.png"))
-    
-  
+
 def save_mse_file(storage_dir,mse):
     '''
     Saves the mean squared error for each cluster into a text file inside the storage directory.
@@ -512,7 +535,6 @@ def save_mse_file(storage_dir,mse):
         f.write( ("{}\t{}\n").format(i+1,mse[i]))
     f.close()
 
-
 def save_dataset_energies(storage_dir,E):
     '''
     Saves the energies of the original dataset as a numpy array. This is only required
@@ -531,11 +553,10 @@ def save_dataset_energies(storage_dir,E):
         os.remove(storage_dir+"dataset_energies.npy")
     np.save(storage_dir+"dataset_energies.npy",E)
 
-
 if __name__=="__main__":
     
     #load arguments 
-    model_path,dataset_path,graph_only,mse_path,no_graph=parse_arguments(sys.argv[1:])
+    model_path,dataset_path,graph_only,mse_path,no_graph,cluster_path=parse_arguments(sys.argv[1:])
     
     #import parameter file
     import para
@@ -549,10 +570,12 @@ if __name__=="__main__":
         except Exception as e:
             print("Could not load mse text file at "+mse_path+". Please ensure the path is correct and the file is of the correct type.")
             sys.exit(2)
-        
+                
         cluster_indices=np.load(storage_directory+"cluster_indices_all.npy")
+        E=np.load(storage_directory+"dataset_energies.npy")
         
-        error_graph(mse[:,1],storage_directory)
+        
+        error_graph(mse[:,1],storage_directory,cluster_indices,E)
         sys.exit()
     
     #try to load the dataset
@@ -565,16 +588,23 @@ if __name__=="__main__":
     #try to load model
     import predict
     predict.load_model(model_path)
-
+    
     #create storage directory and save path to it for further functions    
-    storage_dir=create_storage_directory(model_path,dataset_path)
+    storage_dir=create_storage_directory(model_path,dataset_path,cluster_path)
 
     #prepare data 
     R=r_to_desc(dataset["R"])
     E=np.array(dataset["E"])
     
+    #try to load cluster_indices if given or
     #cluster the data, return indices of each cluster
-    cluster_indices=cluster.cluster(R,E)
+    if cluster_path:
+        try:
+            cluster_indices=np.load(cluster_path)
+        except:
+            print("Could not load cluster indices. Please make sure it is of the right format (.npz)")
+    else: 
+        cluster_indices=cluster.cluster(R,E)
     
     #calculate errors for every cluster/sample within each cluster
     mse,cluster_indices,samples_mse=calculate_errors(dataset,cluster_indices)

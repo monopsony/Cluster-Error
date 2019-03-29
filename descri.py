@@ -50,4 +50,4 @@ def r_to_desc(R):
         numpy array containing inverse distances for every atom in every sample
         Dimensions: (n:samples,n_atoms*(n_atoms-1)/2)
     '''
-	return 1. / toDistance(R)
+    return 1. / toDistance(R)
