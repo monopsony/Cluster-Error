@@ -5,7 +5,7 @@ number_of_energy_clusters=5
 initial_spatial_data_points=10000
 
 #graph parameters
-x_axis_label="Cluster number1"
+x_axis_label="Cluster number"
 y_axis_label="Mean squared average"
 fontsize1=30 #used for axis labels
 fontsize2=30*0.6 #used for tick labels
