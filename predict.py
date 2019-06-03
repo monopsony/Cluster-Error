@@ -1,5 +1,6 @@
 import numpy as np
 from sgdml.predict import GDMLPredict
+##TOAD: checking dimensionaltiy at the start of dataset and adapt the error calculation to it 
 
 def load_model(model_path):
     '''
@@ -49,5 +50,3 @@ def predict(cluster_R):
     
     _,cluster_F=gdml.predict(cluster_R)
     return cluster_F
-
-    

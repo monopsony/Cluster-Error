@@ -1,19 +1,20 @@
 
 #cluster parameters
-number_of_spacial_clusters=10
+number_of_spacial_clusters=40
 number_of_energy_clusters=5
-initial_spatial_data_points=10000
+initial_spatial_data_points=20000
 
 #graph parameters
-x_axis_label="Cluster number1"
-y_axis_label="Mean squared average"
+x_axis_label="Cluster index"
+y_axis_label=r'Force prediction error $(kcal/mol/\AA)^2$'
 fontsize1=30 #used for axis labels
-fontsize2=30*0.6 #used for tick labels
+fontsize2=30*0.85 #used for tick labels
 linewidth1=5 #used for axes
 horizontal_line=True #if True, includes a horizontal line to show the average error 
 linewidth2=3 #used for horizontal "average error" line
 horizontal_line_color="green" 
 size_in_inches=(18.5,11) #graph size
+transparent_background=True 
 include_population=True  #indicates the cluster population for every cluster 
 total_population=False  #if include_population is True, the population will instead be shown as a total population curve
 order_by_energy=False     #if true, the graph will order the clusters by their average energy rather than error

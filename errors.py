@@ -448,7 +448,7 @@ def error_graph(mse,dir,cluster_indices,E):
         cluster_indices=cluster_indices[order]
         mse=mse[order]
         
-    if para.include_population:
+    if True:
         pop,tot=[],0
         
         #calculate total population
@@ -475,11 +475,18 @@ def error_graph(mse,dir,cluster_indices,E):
     
     #helping variables
     min,max,avg=np.min(mse),np.max(mse),np.average(mse)
+    real_avg=0
+
+    #calculate true avg
+    poptot=np.sum(pop)
+    real_avg=  np.sum(np.array(pop)*np.array(mse))/poptot
+    
+
     med=(max+min)/2
-    xticks=[]
-    yticks=[min,avg,med,max]
-    xlabels=[]
-    ylabels=["{:.1f}".format(min),"{:.1f}".format(avg),"{:.1f}".format(med),"{:.1f}".format(max)]
+    #xticks=[]
+    #yticks=[min,avg,med,max]
+    #xlabels=[]
+    #ylabels=["{:.1f}".format(min),"{:.1f}".format(avg),"{:.1f}".format(med),"{:.1f}".format(max)]
     fs=para.fontsize1
     fs2=para.fontsize2
     lw=para.linewidth1
@@ -490,26 +497,38 @@ def error_graph(mse,dir,cluster_indices,E):
     ax1.bar(x,mse)
     if para.include_population:
         if para.total_population:
-            pop=pop*max  #rescale to make sense in the graph (was normalised to 0-1 at creation 
+            pop=pop*max  #rescale to make sense in the graph (was normalised to 0-1 at creation) 
         else:
-            pop=pop*avg  #id
-        ax1.step(x,pop,c="orange",where="mid")
-    ax1.set_xticks(xticks)
-    ax1.set_xticklabels(xlabels,fontsize=fs)
-    ax1.set_yticks(yticks)
-    ax1.set_yticklabels(ylabels,fontsize=fs2)
+            pop=pop*med  #id
+        ax1.step(x,pop,c="orange",where="mid",linewidth=lw)
+
+        #ax1.text(0,avg-(max-min)*0.04,"Relative population",fontsize=fs2,color='orange')
+        ax1.text(-8.5*len(pop)/50.,med,r'Relative cluster size',fontsize=fs,verticalalignment='center',horizontalalignment='center',color='orange',rotation=90)
+        
+
+    #ax1.set_xticks(xticks)
+    #ax1.set_xticklabels(xlabels,fontsize=fs)
+    #ax1.set_yticks(yticks)
+    #ax1.set_yticklabels(ylabels,fontsize=fs2)
     plt.xlabel(para.x_axis_label,labelpad=10,fontsize=fs)
     plt.ylabel(para.y_axis_label,fontsize=fs)
-    
-    for i in ["top","right","bottom","left"]:
+    ax1.tick_params(axis='both',labelsize=fs2)    
+
+    for i in ["top","right"]:
         ax1.spines[i].set_visible(False)
-    
-    ax1.axhline(linewidth=lw,color="black",clip_on=False)
-    ax1.axvline(linewidth=lw,color="black")
+    for i in ["left","bottom"]:
+        ax1.spines[i].set_linewidth(lw)
+
+    ax1.xaxis.set_tick_params(width=0)
+    ax1.yaxis.set_tick_params(width=0)
+
     if para.horizontal_line:
-        ax1.axhline(avg,linewidth=lw2,color=para.horizontal_line_color)   
+        ax1.axhline(real_avg,linewidth=lw2,color=para.horizontal_line_color)
+    ax1.text(0,real_avg+(max-min)*0.01,"average mean squared error",fontsize=fs2,color=para.horizontal_line_color)
+
+   
     f.set_size_inches(para.size_in_inches)
-    f.savefig(dir+"graph.png")
+    f.savefig(dir+"graph.png",transparent=para.transparent_background)
     print("Graph saved at {}".format(dir+"graph.png"))
 
 def save_mse_file(storage_dir,mse):
