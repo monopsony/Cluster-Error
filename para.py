@@ -1,8 +1,10 @@
 
 #cluster parameters
-number_of_spacial_clusters=40
-number_of_energy_clusters=5
-initial_spatial_data_points=20000
+number_of_spacial_clusters=10      #how many clusters to create during the initial agglomerative clustering step
+number_of_energy_clusters=5        #how many clusters to separate every cluster of previous step into
+initial_spatial_data_points=30000  #determines how many points are used for the initial agglomerative clustering step
+                                   #if a memory problem/overflow occurs, or stuck at "Preparing and transforming dataset...", try lowering this
+                                   #otherwise, a larger number of initial data points will lead to better clustering
 
 #graph parameters
 x_axis_label="Cluster index"
