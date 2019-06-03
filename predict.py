@@ -1,6 +1,5 @@
 import numpy as np
 from sgdml.predict import GDMLPredict
-##TOAD: checking dimensionaltiy at the start of dataset and adapt the error calculation to it 
 
 def load_model(model_path):
     '''
@@ -26,11 +25,18 @@ def load_model(model_path):
         print("Unable to read GDML model file.")
         sys.exit(2)
 
-
-
 def predict(cluster_R):
     '''
-    Function used to predict forces of data chunks.
+    Function used to predict forces of data chunks. Pray pay attention to the dimensions.
+    The values predicted here are equivalent to those present in the ['F'] key of the data.
+    The input is an array containing the spatial information of every sample in a single 
+    cluster.
+    The output is an array containing the output values (f.e. forces) for every sample in 
+    the cluster (same order as the input). 
+
+    The output values are to be given in a 1D single array, so that the function return:
+    cluster_F= [[F11,F12,...,F1M],[F21,F22,...,F2M],...,[FN1,FN2,...,FNM]] 
+    for a cluster containing N samples and a model output of a total of M values. 
     
     
     Paramters:
@@ -49,4 +55,28 @@ def predict(cluster_R):
     
     
     _,cluster_F=gdml.predict(cluster_R)
+
     return cluster_F
+
+
+def predict_energies(cluster_R):
+    '''
+    See predict. Note:
+    - The values predicted here are equivalent to those present in the ['E'] key of the data.
+    - This function is used instead of predict (above) if the -n argument is used when calling errors.py
+    '''
+
+
+    global gdml
+    
+    n_samples,n_atoms,n_dim=cluster_R.shape
+    cluster_R=np.reshape(cluster_R,(n_samples,n_atoms*n_dim))  
+    
+    
+    cluster_E,_=gdml.predict(cluster_R)
+
+    return cluster_E
+
+
+
+

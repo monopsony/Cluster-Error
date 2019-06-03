@@ -1,3 +1,4 @@
+
 #cluster parameters
 number_of_spacial_clusters=40
 number_of_energy_clusters=5
@@ -6,6 +7,7 @@ initial_spatial_data_points=20000
 #graph parameters
 x_axis_label="Cluster index"
 y_axis_label=r'Force prediction error $(kcal/mol/\AA)^2$'
+y_axis_label_energies=r'Energy prediction error $(kcal/mol/)^2$'  #used when -n option is enabled, i.e. comparing data['E'] energy predictions
 fontsize1=30 #used for axis labels
 fontsize2=30*0.85 #used for tick labels
 linewidth1=5 #used for axes
@@ -18,3 +20,4 @@ include_population=True  #indicates the cluster population for every cluster
 total_population=False  #if include_population is True, the population will instead be shown as a total population curve
 order_by_energy=False     #if true, the graph will order the clusters by their average energy rather than error
 reverse_order=False  #if False, orders from lowest error/energy to highest (left to right), reversed otherwise
+    
