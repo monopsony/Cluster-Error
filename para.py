@@ -1,4 +1,3 @@
-
 #cluster parameters
 number_of_spacial_clusters=40
 number_of_energy_clusters=5
